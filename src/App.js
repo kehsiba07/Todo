@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Edit, BarChart3, Calendar, X, Trash2, Plus, FileText } from 'lucide-react';
+import { Check, Edit, BarChart3, Calendar, X, Trash2, Plus, FileText, Home } from 'lucide-react';
 
 export default function App() {
   const [todos, setTodos] = useState([]);
   const [completionData, setCompletionData] = useState({});
   const [currentDate] = useState(new Date());
-  const [showYearlyGrid, setShowYearlyGrid] = useState(false);
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'activity', 'edit'
   const [editingId, setEditingId] = useState(null);
-  const [showEditMode, setShowEditMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [showDateDetails, setShowDateDetails] = useState(false);
   const [editModeInput, setEditModeInput] = useState('');
@@ -135,6 +134,7 @@ export default function App() {
   const pendingTasks = selTasks.filter(t => !t.completed);
   const total = todos.length, done = todos.filter(t => t.completed).length;
   const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+  const progressPercentage = todaysTodos.length > 0 ? (completedToday / todaysTodos.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-2 sm:p-4">
@@ -146,64 +146,18 @@ export default function App() {
               <p className="text-sm text-gray-500 mt-1">Stay productive, track your progress</p>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <button onClick={() => setShowEditMode(!showEditMode)} className={`px-4 py-2.5 ${showEditMode ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'} text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all text-sm font-medium flex items-center gap-2`}>
-                {showEditMode ? <><Check size={18}/>Done</> : <><Edit size={18}/>Edit</>}
+              <button onClick={() => setCurrentView('home')} className={`px-4 py-2.5 ${currentView === 'home' ? 'bg-gradient-to-r from-indigo-500 to-blue-500' : 'bg-gray-200 text-gray-700'} text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all text-sm font-medium flex items-center gap-2`}>
+                <Home size={18}/>Home
               </button>
-              <button onClick={() => setShowYearlyGrid(!showYearlyGrid)} className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all text-sm font-medium flex items-center gap-2">
+              <button onClick={() => setCurrentView('edit')} className={`px-4 py-2.5 ${currentView === 'edit' ? 'bg-gradient-to-r from-purple-500 to-pink-500' : 'bg-gray-200 text-gray-700'} text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all text-sm font-medium flex items-center gap-2`}>
+                <Edit size={18}/>Edit
+              </button>
+              <button onClick={() => setCurrentView('activity')} className={`px-4 py-2.5 ${currentView === 'activity' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gray-200 text-gray-700'} text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all text-sm font-medium flex items-center gap-2`}>
                 <BarChart3 size={18}/>Activity
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-              <div className="flex items-center gap-2 text-blue-600 mb-1"><Calendar size={18}/><span className="text-xs font-medium">Today</span></div>
-              <p className="text-2xl font-bold text-blue-900">{completedToday}/{todaysTodos.length}</p>
-              <p className="text-xs text-blue-700 mt-1">Tasks completed</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-              <div className="flex items-center gap-2 text-purple-600 mb-1"><BarChart3 size={18}/><span className="text-xs font-medium">Overall</span></div>
-              <p className="text-2xl font-bold text-purple-900">{rate}%</p>
-              <p className="text-xs text-purple-700 mt-1">Completion rate</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-              <div className="flex items-center gap-2 text-green-600 mb-1"><Check size={18}/><span className="text-xs font-medium">Total</span></div>
-              <p className="text-2xl font-bold text-green-900">{done}</p>
-              <p className="text-xs text-green-700 mt-1">Tasks completed</p>
-            </div>
-          </div>
         </div>
-
-        {showYearlyGrid && (
-          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 overflow-x-auto border border-indigo-100">
-            <div className="mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Year Activity</h2>
-              <p className="text-sm text-gray-600 mt-1">Last 365 days • Click any day for details</p>
-            </div>
-            <div className="flex gap-1 pb-2">
-              <div className="flex flex-col gap-1 pr-2">
-                <div className="h-4"></div>
-                {days.map((d,i) => <div key={i} className="h-4 text-xs text-gray-500 leading-4 font-medium">{i%2===1?d:''}</div>)}
-              </div>
-              <div className="flex gap-1">
-                {grid.map((w,wi) => (
-                  <div key={wi} className="flex flex-col gap-1">
-                    {w.map((d,di) => {
-                      const isT = d.dateKey === getDateKey(currentDate);
-                      return <div key={di} onClick={() => { setSelectedDate(d.dateKey); setShowDateDetails(true); }} className={`w-4 h-4 rounded-md ${getColor(d.count, d.isPastToday)} ${isT ? 'ring-2 ring-indigo-500 ring-offset-1' : ''} transition-all cursor-pointer transform hover:scale-125 hover:shadow-md`} title={`${d.dateKey}: ${d.count} tasks`}/>;
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-6 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-              <span className="font-medium">Less</span>
-              <div className="flex gap-1.5">
-                {['bg-gray-200','bg-green-300','bg-green-400','bg-green-500','bg-green-600','bg-green-700'].map((c,i) => <div key={i} className={`w-4 h-4 ${c} rounded-md`}/>)}
-              </div>
-              <span className="font-medium">More</span>
-            </div>
-          </div>
-        )}
 
         {showDateDetails && selectedDate && (
           <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setShowDateDetails(false); setSelectedDate(null); }}>
@@ -298,7 +252,118 @@ export default function App() {
           </div>
         )}
 
-        {showEditMode ? (
+        {currentView === 'home' && (
+          <>
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-indigo-100">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Today's Progress</h2>
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Tasks Completed Today</p>
+                    <p className="text-3xl font-bold text-indigo-900">{completedToday} / {todaysTodos.length}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-bold text-indigo-600">{Math.round(progressPercentage)}%</p>
+                    <p className="text-sm text-gray-600">Complete</p>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border border-indigo-100">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Today's Tasks</h2>
+                <span className="text-sm text-gray-500">{currentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span>
+              </div>
+              {todaysTodos.length === 0 ? (
+                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center"><Calendar size={48} className="text-indigo-400"/></div>
+                  <p className="text-gray-600 text-lg mb-2">No tasks for today</p>
+                  <p className="text-gray-500 text-sm">Click "Edit" to add some tasks!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {todaysTodos.map(t => (
+                    <div key={t.id} className={`flex items-center justify-between gap-4 p-4 rounded-xl transition-all border-2 ${animatingTodos.has(t.id) ? 'scale-105' : 'scale-100'} ${t.completed ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' : 'bg-gray-50 border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}>
+                      <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => toggleTodo(t.id)}>
+                        <button className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${t.completed ? 'bg-green-500 border-green-500 shadow-lg shadow-green-200' : 'border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'}`}>
+                          {t.completed && <Check size={16} className="text-white"/>}
+                        </button>
+                        <span className={`flex-1 text-base transition-all ${t.completed ? 'line-through text-gray-500' : 'text-gray-800 font-medium'}`}>{t.text}</span>
+                      </div>
+                      <button onClick={(e) => openNotesModal(t, e)} className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-lg transition-colors flex-shrink-0">
+                        <FileText size={14}/>
+                        {t.notes ? 'Notes' : 'Add Note'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {currentView === 'activity' && (
+          <>
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-indigo-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                  <div className="flex items-center gap-2 text-blue-600 mb-1"><Calendar size={18}/><span className="text-xs font-medium">Today</span></div>
+                  <p className="text-2xl font-bold text-blue-900">{completedToday}/{todaysTodos.length}</p>
+                  <p className="text-xs text-blue-700 mt-1">Tasks completed</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+                  <div className="flex items-center gap-2 text-purple-600 mb-1"><BarChart3 size={18}/><span className="text-xs font-medium">Overall</span></div>
+                  <p className="text-2xl font-bold text-purple-900">{rate}%</p>
+                  <p className="text-xs text-purple-700 mt-1">Completion rate</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-2 text-green-600 mb-1"><Check size={18}/><span className="text-xs font-medium">Total</span></div>
+                  <p className="text-2xl font-bold text-green-900">{done}</p>
+                  <p className="text-xs text-green-700 mt-1">Tasks completed</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 overflow-x-auto border border-indigo-100">
+              <div className="mb-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Year Activity</h2>
+                <p className="text-sm text-gray-600 mt-1">Last 365 days • Click any day for details</p>
+              </div>
+              <div className="flex gap-1 pb-2">
+                <div className="flex flex-col gap-1 pr-2">
+                  <div className="h-4"></div>
+                  {days.map((d,i) => <div key={i} className="h-4 text-xs text-gray-500 leading-4 font-medium">{i%2===1?d:''}</div>)}
+                </div>
+                <div className="flex gap-1">
+                  {grid.map((w,wi) => (
+                    <div key={wi} className="flex flex-col gap-1">
+                      {w.map((d,di) => {
+                        const isT = d.dateKey === getDateKey(currentDate);
+                        return <div key={di} onClick={() => { setSelectedDate(d.dateKey); setShowDateDetails(true); }} className={`w-4 h-4 rounded-md ${getColor(d.count, d.isPastToday)} ${isT ? 'ring-2 ring-indigo-500 ring-offset-1' : ''} transition-all cursor-pointer transform hover:scale-125 hover:shadow-md`} title={`${d.dateKey}: ${d.count} tasks`}/>;
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-6 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
+                <span className="font-medium">Less</span>
+                <div className="flex gap-1.5">
+                  {['bg-gray-200','bg-green-300','bg-green-400','bg-green-500','bg-green-600','bg-green-700'].map((c,i) => <div key={i} className={`w-4 h-4 ${c} rounded-md`}/>)}
+                </div>
+                <span className="font-medium">More</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {currentView === 'edit' && (
           <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-2 border-purple-300">
             <div className="flex items-center gap-2 mb-4">
               <Edit className="text-purple-600" size={24}/>
@@ -346,37 +411,6 @@ export default function App() {
                 ))
               )}
             </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border border-indigo-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Today's Tasks</h2>
-              <span className="text-sm text-gray-500">{currentDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span>
-            </div>
-            {todaysTodos.length === 0 ? (
-              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border-2 border-dashed border-gray-300">
-                <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center"><Calendar size={48} className="text-indigo-400"/></div>
-                <p className="text-gray-600 text-lg mb-2">No tasks for today</p>
-                <p className="text-gray-500 text-sm">Click "Edit" to add some tasks!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {todaysTodos.map(t => (
-                  <div key={t.id} className={`flex items-center justify-between gap-4 p-4 rounded-xl transition-all border-2 ${animatingTodos.has(t.id) ? 'scale-105' : 'scale-100'} ${t.completed ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' : 'bg-gray-50 border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}>
-                    <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => toggleTodo(t.id)}>
-                      <button className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${t.completed ? 'bg-green-500 border-green-500 shadow-lg shadow-green-200' : 'border-gray-300 hover:border-indigo-500 hover:bg-indigo-50'}`}>
-                        {t.completed && <Check size={16} className="text-white"/>}
-                      </button>
-                      <span className={`flex-1 text-base transition-all ${t.completed ? 'line-through text-gray-500' : 'text-gray-800 font-medium'}`}>{t.text}</span>
-                    </div>
-                    <button onClick={(e) => openNotesModal(t, e)} className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-lg transition-colors flex-shrink-0">
-                      <FileText size={14}/>
-                      {t.notes ? 'Notes' : 'Add Note'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>
